@@ -14,7 +14,7 @@ Description:
 # All Custom Imports Here.
 
 # All Native Imports Here.
-from mongorepo.logging import get_logger
+from mongorepo.logger import get_logger
 
 # All Attributes or Constants Here.
 

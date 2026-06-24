@@ -23,7 +23,7 @@ from mongorepo import get_logger
 from mongorepo.errors.database import *
 
 # All Attributes or Constants Here.
-logger = get_logger("database")
+logger = get_logger()
 
 
 class Database:
@@ -81,8 +81,7 @@ class Database:
             cls._database_name = database_name
 
             logger.info(
-                "Connected to MongoDB database '%s'.",
-                database_name,
+                f"Connected to MongoDB database '{database_name}'."
             )
 
         except Exception as exc:
