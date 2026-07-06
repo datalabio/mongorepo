@@ -11,116 +11,121 @@ Description:
 
 # All Python Built-in Imports Here.
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Generic, TypeVar
+from dataclasses import dataclass, field
 
 # All Custom Imports Here.
 
 # All Native Imports Here.
-from mongorepo.models import MongoModel
+from mongorepo.types import Document, Documents
+
 
 # All Attributes or Constants Here.
-T = TypeVar(
-    "T",
-    bound=MongoModel,
-)
 
 
-# ==========================================================
+# -----------------------------------------------------------------------------
 # INSERT
-# ==========================================================
+# -----------------------------------------------------------------------------
+@dataclass(slots=True)
+class InsertResult:
+    """Result of insert_one()."""
+
+    acknowledged: bool = True
+
+    inserted_id: str | None = None
+
+    document: Document | None = None
+
 
 @dataclass(slots=True)
-class InsertResult(Generic[T]):
-    """
-    Result of insert_one().
-    """
+class InsertManyResult:
+    """Result of insert_many()."""
 
-    inserted_id: str
+    acknowledged: bool = True
 
-    document: T | None = None
+    inserted_ids: list[str] = field(
+        default_factory=list,
+    )
 
-
-@dataclass(slots=True)
-class InsertManyResult(Generic[T]):
-    """
-    Result of insert_many().
-    """
-
-    inserted_ids: list[str]
-
-    documents: list[T] | None = None
+    documents: Documents = field(
+        default_factory=list,
+    )
 
 
-# ==========================================================
+# -----------------------------------------------------------------------------
 # UPDATE
-# ==========================================================
-
+# -----------------------------------------------------------------------------
 @dataclass(slots=True)
-class UpdateResult(Generic[T]):
-    """
-    Result of update_one().
-    """
+class UpdateResult:
+    """Result of update."""
+    acknowledged: bool = True
 
-    matched_count: int
+    matched_count: int = 0
 
-    modified_count: int
+    modified_count: int = 0
 
-    document: T | None = None
+    document: Document | None = None
 
     upserted_id: str | None = None
 
+    @property
+    def was_upserted(self) -> bool:
+        return self.upserted_id is not None
+
 
 @dataclass(slots=True)
-class UpdateManyResult(Generic[T]):
-    """
-    Result of update_many().
-    """
+class UpdateManyResult:
+    """Result of update_many()."""
 
-    matched_count: int
+    acknowledged: bool = True
 
-    modified_count: int
+    matched_count: int = 0
 
-    documents: list[T] | None = None
+    modified_count: int = 0
 
-    upserted_ids: list[str] | None = None
+    documents: Documents = field(
+        default_factory=list,
+    )
+
+    upserted_ids: list[str] = field(
+        default_factory=list,
+    )
 
 
-# ==========================================================
+# -----------------------------------------------------------------------------
 # DELETE
-# ==========================================================
+# -----------------------------------------------------------------------------
+@dataclass(slots=True)
+class DeleteResult:
+    """Result of delete_one()."""
+
+    acknowledged: bool = True
+
+    deleted_count: int = 0
+
+    document: Document | None = None
+
 
 @dataclass(slots=True)
-class DeleteResult(Generic[T]):
-    """
-    Result of delete_one().
-    """
+class DeleteManyResult:
+    """Result of delete_many()."""
 
-    deleted_count: int
+    acknowledged: bool = True
 
-    document: T | None = None
+    deleted_count: int = 0
 
-
-@dataclass(slots=True)
-class DeleteManyResult(Generic[T]):
-    """
-    Result of delete_many().
-    """
-
-    deleted_count: int
-
-    documents: list[T] | None = None
+    documents: Documents = field(
+        default_factory=list,
+    )
 
 
-# ==========================================================
+# -----------------------------------------------------------------------------
 # BULK
-# ==========================================================
-
+# -----------------------------------------------------------------------------
 @dataclass(slots=True)
 class BulkResult:
-    """
-    Result of bulk_write().
-    """
+    """Result of bulk_write()."""
+
+    acknowledged: bool = True
 
     inserted_count: int = 0
 
@@ -132,9 +137,33 @@ class BulkResult:
 
     upserted_count: int = 0
 
-    inserted_ids: list[str] | None = None
+    inserted_ids: list[str] = field(
+        default_factory=list,
+    )
 
-    upserted_ids: list[str] | None = None
+    upserted_ids: list[str] = field(
+        default_factory=list,
+    )
+
+
+# -----------------------------------------------------------------------------
+# INDEXES
+# -----------------------------------------------------------------------------
+@dataclass(slots=True)
+class IndexSyncResult:
+    """Result of index synchronization."""
+
+    created: list[str] = field(
+        default_factory=list,
+    )
+
+    dropped: list[str] = field(
+        default_factory=list,
+    )
+
+    skipped: list[str] = field(
+        default_factory=list,
+    )
 
 
 if __name__ == '__main__':

@@ -21,20 +21,16 @@ from enum import StrEnum
 # All Attributes or Constants Here.
 
 
-class ReturnDocument(StrEnum):
-    """
-    Repository return strategy.
-
-    MODEL:
-        Return model instance(s).
-
+class ReturnType(StrEnum):
+    """Repository return strategy.
+    DOCUMENT:
+        Return DOCUMENT.
     ID:
         Return inserted/updated id(s).
-
     NONE:
         Return nothing.
     """
-    MODEL = "model"
+    DOCUMENT = "document"
     ID = "id"
     NONE = "none"
 
