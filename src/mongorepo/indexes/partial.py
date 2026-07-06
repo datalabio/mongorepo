@@ -26,11 +26,8 @@ from mongorepo.indexes.enums import SortOrder
 
 @dataclass(slots=True, kw_only=True)
 class PartialIndex(BaseIndex):
-    """
-    MongoDB partial index.
-
+    """MongoDB partial index.
     Example:
-
         PartialIndex(
             fields=[
                 ("email", SortOrder.ASC),

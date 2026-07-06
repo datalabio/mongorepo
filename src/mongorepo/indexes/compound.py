@@ -7,31 +7,6 @@ https://www.apache.org/licenses/LICENSE-2.0
 File: compound.py
 Description:
     Compound MongoDB index definition.
-Example:
-from mongorepo.indexes import SingleFieldIndex, CompoundIndex, SortOrder
-
-indexes = [
-
-    SingleFieldIndex(
-        field="email",
-        unique=True,
-        name="email_unique",
-    ),
-
-    CompoundIndex(
-        fields=[
-            (
-                "status",
-                SortOrder.ASC,
-            ),
-            (
-                "created_at",
-                SortOrder.DESC,
-            ),
-        ],
-        name="status_created_idx",
-    ),
-]
 """
 
 # All Python Built-in Imports Here.
@@ -51,11 +26,8 @@ from mongorepo.indexes.enums import SortOrder
 
 @dataclass(slots=True, kw_only=True)
 class CompoundIndex(BaseIndex):
-    """
-    Compound MongoDB index.
-
+    """Compound MongoDB index.
     Example:
-
         CompoundIndex(
             fields=[
                 ("status", SortOrder.ASC),

@@ -22,11 +22,8 @@ from enum import IntEnum, StrEnum
 
 
 class SortOrder(IntEnum):
-    """
-    MongoDB index sort order.
-
+    """MongoDB index sort order.
     Example:
-
         SortOrder.ASC
         SortOrder.DESC
     """
@@ -36,33 +33,25 @@ class SortOrder(IntEnum):
 
 
 class TextOrder(StrEnum):
-    """
-    MongoDB text index type.
-    """
+    """MongoDB text index type."""
 
     TEXT = "text"
 
 
 class HashedOrder(StrEnum):
-    """
-    MongoDB hashed index type.
-    """
+    """MongoDB hashed index type."""
 
     HASHED = "hashed"
 
 
 class Geo2DOrder(StrEnum):
-    """
-    MongoDB geo2d index type.
-    """
+    """MongoDB geo2d index type."""
 
     GEO2D = "2d"
 
 
 class GeoSphereOrder(StrEnum):
-    """
-    MongoDB geosphere index type.
-    """
+    """MongoDB geosphere index type."""
 
     GEOSPHERE = "2dsphere"
 

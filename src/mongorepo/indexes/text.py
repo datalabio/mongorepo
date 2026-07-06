@@ -25,11 +25,8 @@ from mongorepo.indexes.base import BaseIndex
 
 @dataclass(slots=True, kw_only=True)
 class TextIndex(BaseIndex):
-    """
-    MongoDB text index.
-
+    """MongoDB text index.
     Example:
-
         TextIndex(
             fields=[
                 "title",

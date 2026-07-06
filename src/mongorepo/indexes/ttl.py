@@ -26,11 +26,8 @@ from mongorepo.indexes.enums import SortOrder
 
 @dataclass(slots=True, kw_only=True)
 class TTLIndex(BaseIndex):
-    """
-    MongoDB TTL index.
-
+    """MongoDB TTL index.
     Example:
-
         TTLIndex(
             field="expires_at",
             expire_after_seconds=3600,

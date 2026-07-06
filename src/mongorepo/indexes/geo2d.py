@@ -25,11 +25,8 @@ from mongorepo.indexes.base import BaseIndex
 
 @dataclass(slots=True, kw_only=True)
 class Geo2DIndex(BaseIndex):
-    """
-    MongoDB geo2d index.
-
+    """MongoDB geo2d index.
     Example:
-
         Geo2DIndex(
             field="location",
         )

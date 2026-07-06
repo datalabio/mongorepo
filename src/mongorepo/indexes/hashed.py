@@ -25,11 +25,8 @@ from mongorepo.indexes.base import BaseIndex
 
 @dataclass(slots=True, kw_only=True)
 class HashedIndex(BaseIndex):
-    """
-    MongoDB hashed index.
-
+    """MongoDB hashed index.
     Example:
-
         HashedIndex(
             field="user_id",
         )

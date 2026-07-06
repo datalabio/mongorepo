@@ -25,11 +25,8 @@ from mongorepo.indexes.base import BaseIndex
 
 @dataclass(slots=True, kw_only=True)
 class WildcardIndex(BaseIndex):
-    """
-    MongoDB wildcard index.
-
+    """MongoDB wildcard index.
     Examples:
-
         WildcardIndex()
 
         WildcardIndex(

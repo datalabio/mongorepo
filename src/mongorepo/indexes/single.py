@@ -26,11 +26,8 @@ from mongorepo.indexes.enums import SortOrder
 
 @dataclass(slots=True, kw_only=True)
 class SingleFieldIndex(BaseIndex):
-    """
-    Single field MongoDB index.
-
+    """Single field MongoDB index.
     Example:
-
         SingleFieldIndex(
             field="email",
             unique=True,

@@ -25,9 +25,7 @@ from abc import ABC, abstractmethod
 
 @dataclass(slots=True, kw_only=True)
 class BaseIndex(ABC):
-    """
-    Base class for all MongoDB indexes.
-    """
+    """Base class for all MongoDB indexes."""
 
     name: str | None = None
 
@@ -41,15 +39,11 @@ class BaseIndex(ABC):
 
     @abstractmethod
     def keys(self) -> list[tuple[str, Any]]:
-        """
-        Return MongoDB index keys.
-        """
+        """Return MongoDB index keys."""
         raise NotImplementedError
 
     def options(self) -> dict[str, Any]:
-        """
-        Return MongoDB index options.
-        """
+        """Return MongoDB index options."""
         options: dict[str, Any] = {}
 
         if self.name:
@@ -72,9 +66,7 @@ class BaseIndex(ABC):
     def to_pymongo(
             self,
     ) -> tuple[list[tuple[str, Any]], dict[str, Any]]:
-        """
-        Convert to PyMongo create_index arguments.
-        """
+        """Convert to PyMongo create_index arguments."""
         return (
             self.keys(),
             self.options(),
