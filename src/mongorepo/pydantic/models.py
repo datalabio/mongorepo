@@ -17,8 +17,8 @@ from datetime import datetime
 from pydantic import Field, BaseModel, ConfigDict
 
 # All Native Imports Here.
-from mongorepo.helpers import get_utc_now
-from mongorepo.data_types import PyObjectId
+from mongorepo.pydantic.helpers import get_utc_now
+from mongorepo.pydantic.data_types import PyObjectId
 
 
 # All Attributes or Constants Here.
