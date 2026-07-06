@@ -17,6 +17,7 @@ from typing import ClassVar
 from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.asynchronous.collection import AsyncCollection
+from pymongo.asynchronous.client_session import AsyncClientSession
 
 # All Native Imports Here.
 from mongorepo import get_logger
@@ -27,9 +28,7 @@ logger = get_logger()
 
 
 class Database:
-    """
-    Global MongoDB connection manager.
-    """
+    """Global MongoDB connection manager."""
     _client: ClassVar[AsyncMongoClient | None] = None
     _database: ClassVar[AsyncDatabase | None] = None
 
@@ -44,9 +43,7 @@ class Database:
             database_name: str,
             **kwargs,
     ) -> None:
-        """
-        Create a MongoDB connection.
-
+        """Create a MongoDB connection.
         Args:
             uri: MongoDB connection URI.
             database_name: Database name.
@@ -91,9 +88,7 @@ class Database:
 
     @classmethod
     async def disconnect(cls) -> None:
-        """
-        Close the MongoDB connection.
-        """
+        """Close the MongoDB connection."""
         try:
             if cls._client:
                 await cls._client.close()
@@ -112,8 +107,7 @@ class Database:
 
     @classmethod
     def get_client(cls) -> AsyncMongoClient:
-        """
-        Return active MongoDB client.
+        """Return active MongoDB client.
 
         Raises:
             DatabaseConnectionError
@@ -127,8 +121,7 @@ class Database:
 
     @classmethod
     def get_database(cls) -> AsyncDatabase:
-        """
-        Return active database.
+        """Return active database.
 
         Raises:
             DatabaseConnectionError
@@ -145,8 +138,7 @@ class Database:
             cls,
             name: str,
     ) -> AsyncCollection:
-        """
-        Return a collection instance.
+        """Return a collection instance.
 
         Args:
             name: Collection name.
@@ -164,8 +156,7 @@ class Database:
 
     @classmethod
     async def is_alive(cls) -> bool:
-        """
-        Verify MongoDB availability.
+        """Verify MongoDB availability.
 
         Returns:
             bool
@@ -180,6 +171,19 @@ class Database:
         except Exception as exc:
             raise DatabaseHealthCheckError(
                 f"Database health check failed: {exc}"
+            ) from exc
+
+    @classmethod
+    async def start_session(cls) -> AsyncClientSession:
+        """Start MongoDB session."""
+        try:
+
+            return cls.get_client().start_session()
+
+        except Exception as exc:
+            raise DatabaseSessionError(
+                f"Failed to start "
+                f"session: {exc}"
             ) from exc
 
 
