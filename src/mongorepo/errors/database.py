@@ -22,81 +22,61 @@ from mongorepo.errors import MongoRepoError
 
 
 class DatabaseError(MongoRepoError):
-    """
-    Base exception for all database-related failures.
-    """
+    """Base exception for all database-related failures."""
 
     default_message = "A database error occurred."
 
 
 class DatabaseConfigurationError(DatabaseError):
-    """
-    Raised when database configuration is invalid.
-    """
+    """Raised when database configuration is invalid."""
 
     default_message = "Invalid database configuration."
 
 
 class DatabaseConnectionError(DatabaseError):
-    """
-    Raised when a connection to MongoDB cannot be established.
-    """
+    """Raised when a connection to MongoDB cannot be established."""
 
     default_message = "Failed to connect to MongoDB."
 
 
 class DatabaseDisconnectionError(DatabaseError):
-    """
-    Raised when MongoDB connection cannot be closed properly.
-    """
+    """Raised when MongoDB connection cannot be closed properly."""
 
     default_message = "Failed to disconnect from MongoDB."
 
 
 class DatabaseCollectionError(DatabaseError):
-    """
-    Raised when a collection cannot be accessed or created.
-    """
+    """Raised when a collection cannot be accessed or created."""
 
     default_message = "Collection operation failed."
 
 
 class DatabaseSessionError(DatabaseError):
-    """
-    Raised when MongoDB session creation or usage fails.
-    """
+    """Raised when MongoDB session creation or usage fails."""
 
     default_message = "MongoDB session failed."
 
 
 class DatabaseTransactionError(DatabaseError):
-    """
-    Raised when a transaction fails.
-    """
+    """Raised when a transaction fails."""
 
     default_message = "MongoDB transaction failed."
 
 
 class DatabaseOperationError(DatabaseError):
-    """
-    Generic database operation failure.
-    """
+    """Generic database operation failure."""
 
     default_message = "Database operation failed."
 
 
 class DatabaseHealthCheckError(DatabaseError):
-    """
-    Raised when database health verification fails.
-    """
+    """Raised when database health verification fails."""
 
     default_message = "Database health check failed."
 
 
 class DatabaseTimeoutError(DatabaseError):
-    """
-    Raised when a database operation exceeds the configured timeout.
-    """
+    """Raised when a database operation exceeds the configured timeout."""
 
     default_message = "Database operation timed out."
 

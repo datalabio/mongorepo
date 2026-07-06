@@ -22,9 +22,7 @@ from mongorepo.errors import MongoRepoError
 
 
 class ValidationError(MongoRepoError):
-    """
-    Raised when validation fails before reaching MongoDB.
-    """
+    """Raised when validation fails before reaching MongoDB."""
 
     default_message = "Validation failed."
 

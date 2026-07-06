@@ -22,9 +22,7 @@ from typing import Any
 
 
 class MongoRepoError(Exception):
-    """
-    Base exception for all mongorepo exceptions.
-    """
+    """Base exception for all mongorepo exceptions."""
 
     default_message = "An unknown mongorepo error occurred."
 

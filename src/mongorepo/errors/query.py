@@ -21,25 +21,19 @@ from mongorepo.errors import MongoRepoError
 # All Attributes or Constants Here.
 
 class QueryError(MongoRepoError):
-    """
-    Raised when query construction is invalid.
-    """
+    """Raised when query construction is invalid."""
 
     default_message = "Invalid query."
 
 
 class PaginationError(QueryError):
-    """
-    Raised when pagination parameters are invalid.
-    """
+    """Raised when pagination parameters are invalid."""
 
     default_message = "Invalid pagination parameters."
 
 
 class AggregationError(QueryError):
-    """
-    Raised when aggregation pipeline execution fails.
-    """
+    """Raised when aggregation pipeline execution fails."""
 
     default_message = "Aggregation pipeline failed."
 
