@@ -63,9 +63,7 @@ class BaseIndex(ABC):
 
         return options
 
-    def to_pymongo(
-            self,
-    ) -> tuple[list[tuple[str, Any]], dict[str, Any]]:
+    def to_pymongo(self) -> tuple[list[tuple[str, Any]], dict[str, Any]]:
         """Convert to PyMongo create_index arguments."""
         return (
             self.keys(),

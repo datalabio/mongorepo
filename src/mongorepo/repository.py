@@ -60,122 +60,58 @@ logger = get_logger()
 
 
 class BaseRepository:
-    """
-    Generic MongoDB repository.
-
+    """Generic MongoDB repository.
     Example:
-
         class UserRepository(
             BaseRepository,
         ):
-
             collection_name = "users"
     """
-
-    #
     # Repository metadata
-    #
     collection_name: ClassVar[str]
 
-    indexes: ClassVar[
-        list[BaseIndex]
-    ] = []
+    indexes: ClassVar[list[BaseIndex]] = []
 
-    #
     # Repository initialization
-    #
-    def __init_subclass__(
-            cls,
-            **kwargs,
-    ):
-        super().__init_subclass__(
-            **kwargs,
-        )
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
 
-        if (
-                cls.__name__
-                != "BaseRepository"
-                and not getattr(
-            cls,
-            "collection_name",
-            None,
-        )
-        ):
+        if (cls.__name__ != "BaseRepository" and
+                not getattr(cls, "collection_name", None)):
             raise ConfigurationError(
-                f"{cls.__name__} "
-                f"must define "
-                f"'collection_name'."
-            )
+                f"{cls.__name__} must define 'collection_name'.")
 
-    # ==========================================================
+    # -------------------------------------------------------------------------
     # Collection Helpers
-    # ==========================================================
-
+    # -------------------------------------------------------------------------
     @classmethod
-    def collection(
-            cls,
-    ) -> AsyncCollection:
-        """
-        Return MongoDB collection.
-        """
-        return Database.get_collection(
-            cls.collection_name,
-        )
-
-    # ==========================================================
-    # ObjectId Helpers
-    # ==========================================================
+    def collection(cls) -> AsyncCollection:
+        """Return MongoDB collection."""
+        return Database.get_collection(cls.collection_name)
 
     @staticmethod
-    def object_id(
-            value: str,
-    ) -> ObjectId:
-        """
-        Convert string to ObjectId.
-        """
+    def object_id(value: str) -> ObjectId:
+        """Convert string to ObjectId."""
         try:
-            return ObjectId(
-                value,
-            )
+            return ObjectId(value)
 
         except InvalidId as exc:
-            raise ValueError(
-                f"Invalid ObjectId: "
-                f"{value}"
-            ) from exc
+            raise ValueError(f"Invalid ObjectId: {value}") from exc
 
     @staticmethod
-    def object_ids(
-            values: list[str],
-    ) -> list[ObjectId]:
-        """
-        Convert list of strings
-        to ObjectIds.
-        """
-        return [
-            BaseRepository.object_id(
-                value,
-            )
-            for value in values
-        ]
+    def object_ids(values: list[str]) -> list[ObjectId]:
+        """Convert list of strings to ObjectIds."""
+        return [BaseRepository.object_id(value, ) for value in values]
 
-    # ==========================================================
+    # -------------------------------------------------------------------------
     # Normalizers
-    # ==========================================================
-
+    # -------------------------------------------------------------------------
     @staticmethod
-    def normalize_projection(
-            projection: Projection,
-    ) -> dict[str, int] | None:
-        """
-        Normalize projection.
-
+    def normalize_projection(projection: Projection) -> dict[str, int] | None:
+        """Normalize projection.
         Supports:
-
             ["name", "email"]
-
         and:
-
             {
                 "name": 1,
                 "email": 1,
@@ -184,82 +120,41 @@ class BaseRepository:
         if projection is None:
             return None
 
-        if isinstance(
-                projection,
-                dict,
-        ):
+        if isinstance(projection, dict):
             return projection
 
-        return {
-            field: 1
-            for field in projection
-        }
+        return {field: 1 for field in projection}
 
     @staticmethod
-    def normalize_update(
-            update: Update | None = None,
-            **kwargs,
-    ) -> Update:
-        """
-        Normalize update expression.
-
+    def normalize_update(update: Update | None = None, **kwargs) -> Update:
+        """Normalize update expression.
         Supports:
-
             {"$set": {...}}
-
         and:
-
             name="Amol",
             age=33
         """
         if update is not None:
-
-            #
             # MongoDB operators
-            #
-            if any(
-                    key.startswith(
-                        "$",
-                    )
-                    for key in update
-            ):
+            if any(key.startswith("$") for key in update):
                 return update
 
-            #
             # Plain dictionary
-            #
-            return {
-                "$set": update,
-            }
+            return {"$set": update}
 
-        #
-        # Keyword arguments
-        #
-        return {
-            "$set": kwargs,
-        }
+        return {"$set": kwargs}
 
     @staticmethod
-    def normalize_session(
-            session: Session,
-    ) -> Session:
-        """
-        Normalize MongoDB session.
-        """
+    def normalize_session(session: Session) -> Session:
+        """Normalize MongoDB session."""
         return session
 
-    # ==========================================================
+    # -------------------------------------------------------------------------
     # Document Helpers
-    # ==========================================================
-
+    # -------------------------------------------------------------------------
     @classmethod
-    def prepare_document(
-            cls,
-            document: Document,
-    ) -> Document:
-        """
-        Prepare document for MongoDB.
-
+    def prepare_document(cls, document: Document) -> Document:
+        """Prepare document for MongoDB.
         - Creates a copy.
         - Converts string _id to ObjectId.
         - Removes null _id.
@@ -269,84 +164,52 @@ class BaseRepository:
         if "_id" not in document:
             return document
 
-        #
         # Remove empty _id
-        #
         if document["_id"] is None:
-            document.pop(
-                "_id",
-                None,
-            )
+            document.pop("_id", None)
+
             return document
 
-        #
         # Convert string id
-        #
-        if isinstance(
-                document["_id"],
-                str,
-        ):
-            document["_id"] = cls.object_id(
-                document["_id"],
-            )
+        if isinstance(document["_id"], str):
+            document["_id"] = cls.object_id(document["_id"])
 
         return document
 
-    # ==========================================================
+    # -------------------------------------------------------------------------
     # CREATE
-    # ==========================================================
-
+    # -------------------------------------------------------------------------
     @classmethod
     async def create(
             cls,
             document: Document,
             *,
             session: Session = None,
-            return_type: ReturnType = (
-                    ReturnType.DOCUMENT
-            ),
+            return_type: ReturnType = ReturnType.DOCUMENT
     ) -> InsertResult:
-        """
-        Create a single document.
-        """
+        """Create a single document."""
         try:
-            document = cls.prepare_document(
+            document = cls.prepare_document(document)
+            result = await cls.collection().insert_one(
                 document,
-            )
-            result = await (
-                cls.collection().insert_one(
-                    document,
-                    session=session,
-                )
+                session=session
             )
 
-            inserted_id = str(
-                result.inserted_id,
-            )
+            inserted_id = str(result.inserted_id)
 
             return InsertResult(
                 acknowledged=result.acknowledged,
                 inserted_id=inserted_id,
                 document=(
-                    document
-                    if return_type
-                       == ReturnType.DOCUMENT
-                    else None
-                ),
+                    document if return_type == ReturnType.DOCUMENT else None
+                )
             )
 
         except DuplicateKeyError as exc:
-
-            raise DuplicateDocumentError(
-                cls.collection_name,
-            ) from exc
+            raise DuplicateDocumentError(cls.collection_name) from exc
 
         except PyMongoError as exc:
-
-            raise CreateError(
-                f"Failed to create "
-                f"document: {exc}"
-            ) from exc
+            raise CreateError(f"Failed to create document: {exc}") from exc
 
     @classmethod
     async def create_many(
@@ -355,20 +218,12 @@ class BaseRepository:
             *,
             session: Session = None,
             ordered: bool = True,
-            return_type: ReturnType = (
-                    ReturnType.DOCUMENT
-            ),
+            return_type: ReturnType = ReturnType.DOCUMENT,
     ) -> InsertManyResult:
-        """
-        Create multiple documents.
-        """
+        """Create multiple documents."""
         try:
-
             documents = [
-                cls.prepare_document(
-                    document,
-                )
-                for document in documents
+                cls.prepare_document(document) for document in documents
             ]
 
             result = await (
@@ -379,40 +234,25 @@ class BaseRepository:
                 )
             )
 
-            inserted_ids = [
-                str(id_)
-                for id_
-                in result.inserted_ids
-            ]
+            inserted_ids = [str(id_) for id_ in result.inserted_ids]
 
             return InsertManyResult(
                 acknowledged=result.acknowledged,
                 inserted_ids=inserted_ids,
                 documents=(
-                    documents
-                    if return_type
-                       == ReturnType.DOCUMENT
-                    else []
-                ),
+                    documents if return_type == ReturnType.DOCUMENT else []
+                )
             )
 
         except DuplicateKeyError as exc:
-
-            raise DuplicateDocumentError(
-                cls.collection_name,
-            ) from exc
+            raise DuplicateDocumentError(cls.collection_name) from exc
 
         except PyMongoError as exc:
+            raise CreateError(f"Failed to create documents: {exc}") from exc
 
-            raise CreateError(
-                f"Failed to create "
-                f"documents: {exc}"
-            ) from exc
-
-    # ==========================================================
+    # -------------------------------------------------------------------------
     # READ
-    # ==========================================================
-
+    # -------------------------------------------------------------------------
     @classmethod
     async def find_by_id(
             cls,
@@ -421,31 +261,18 @@ class BaseRepository:
             projection: Projection = None,
             session: Session = None,
     ) -> Document | None:
-        """
-        Find document by _id.
-        """
+        """Find document by _id."""
         try:
-
             return await (
                 cls.collection().find_one(
-                    {
-                        "_id": cls.object_id(
-                            id_,
-                        )
-                    },
-                    projection=cls.normalize_projection(
-                        projection,
-                    ),
-                    session=session,
+                    {"_id": cls.object_id(id_)},
+                    projection=cls.normalize_projection(projection),
+                    session=session
                 )
             )
 
         except PyMongoError as exc:
-
-            raise ReadError(
-                f"Failed to find "
-                f"document by id: {exc}"
-            ) from exc
+            raise ReadError(f"Failed to find document by id: {exc}") from exc
 
     @classmethod
     async def find_one(
@@ -456,28 +283,19 @@ class BaseRepository:
             sort: Sort = None,
             session: Session = None,
     ) -> Document | None:
-        """
-        Find single document.
-        """
+        """Find single document."""
         try:
-
             return await (
                 cls.collection().find_one(
                     document_filter,
-                    projection=cls.normalize_projection(
-                        projection,
-                    ),
+                    projection=cls.normalize_projection(projection),
                     sort=sort,
                     session=session,
                 )
             )
 
         except PyMongoError as exc:
-
-            raise ReadError(
-                f"Failed to find "
-                f"document: {exc}"
-            ) from exc
+            raise ReadError(f"Failed to find document: {exc}") from exc
 
     @classmethod
     async def find(
@@ -490,36 +308,23 @@ class BaseRepository:
             limit: int | None = None,
             session: Session = None,
     ) -> Documents:
-        """
-        Find multiple documents.
-        """
+        """Find multiple documents."""
         try:
-
             cursor = cls.collection().find(
                 document_filter or {},
-                projection=cls.normalize_projection(
-                    projection,
-                ),
+                projection=cls.normalize_projection(projection),
                 sort=sort,
                 skip=skip,
                 session=session,
             )
 
             if limit is not None:
-                cursor = cursor.limit(
-                    limit,
-                )
+                cursor = cursor.limit(limit)
 
-            return await cursor.to_list(
-                length=None,
-            )
+            return await cursor.to_list(length=None)
 
         except PyMongoError as exc:
-
-            raise ReadError(
-                f"Failed to find "
-                f"documents: {exc}"
-            ) from exc
+            raise ReadError(f"Failed to find documents: {exc}") from exc
 
     @classmethod
     async def exists(
@@ -528,17 +333,12 @@ class BaseRepository:
             *,
             session: Session = None,
     ) -> bool:
-        """
-        Check if document exists.
-        """
+        """Check if document exists."""
         try:
-
             document = await (
                 cls.collection().find_one(
                     document_filter,
-                    projection={
-                        "_id": 1,
-                    },
+                    projection={"_id": 1},
                     session=session,
                 )
             )
@@ -546,11 +346,8 @@ class BaseRepository:
             return document is not None
 
         except PyMongoError as exc:
-
             raise ReadError(
-                f"Failed to check "
-                f"document existence: {exc}"
-            ) from exc
+                f"Failed to check document existence: {exc}") from exc
 
     @classmethod
     async def count(
@@ -559,11 +356,8 @@ class BaseRepository:
             *,
             session: Session = None,
     ) -> int:
-        """
-        Count documents.
-        """
+        """Count documents."""
         try:
-
             return await (
                 cls.collection().count_documents(
                     document_filter or {},
@@ -572,16 +366,11 @@ class BaseRepository:
             )
 
         except PyMongoError as exc:
+            raise ReadError(f"Failed to count documents: {exc}") from exc
 
-            raise ReadError(
-                f"Failed to count "
-                f"documents: {exc}"
-            ) from exc
-
-    # ==========================================================
+    # -------------------------------------------------------------------------
     # UPDATE
-    # ==========================================================
-
+    # -------------------------------------------------------------------------
     @classmethod
     async def save(
             cls,
@@ -589,38 +378,25 @@ class BaseRepository:
             *,
             session: Session = None,
     ) -> UpdateResult:
-        """
-        Replace entire document.
-        """
+        """Replace entire document."""
         try:
+            document = cls.prepare_document(document)
 
-            document = cls.prepare_document(
-                document,
-            )
-
-            object_id = document.get(
-                "_id",
-            )
+            object_id = document.get("_id")
 
             if object_id is None:
-                raise ValueError(
-                    "Document must contain '_id'."
-                )
+                raise ValueError("Document must contain '_id'.")
 
             result = await (
                 cls.collection().replace_one(
-                    {
-                        "_id": object_id,
-                    },
+                    {"_id": object_id},
                     document,
                     session=session,
                 )
             )
 
             if result.matched_count == 0:
-                raise DocumentNotFoundError(
-                    cls.collection_name,
-                )
+                raise DocumentNotFoundError(cls.collection_name)
 
             return UpdateResult(
                 acknowledged=result.acknowledged,
@@ -633,10 +409,7 @@ class BaseRepository:
             raise
 
         except PyMongoError as exc:
-            raise UpdateError(
-                f"Failed to save "
-                f"document: {exc}"
-            ) from exc
+            raise UpdateError(f"Failed to save document: {exc}") from exc
 
     @classmethod
     async def update_by_id(
@@ -650,15 +423,9 @@ class BaseRepository:
             ),
             **kwargs,
     ) -> UpdateResult:
-        """
-        Update document by id.
-        """
+        """Update document by id."""
         return await cls.update_one(
-            {
-                "_id": cls.object_id(
-                    id_,
-                )
-            },
+            {"_id": cls.object_id(id_)},
             update,
             session=session,
             return_type=return_type,
@@ -672,22 +439,13 @@ class BaseRepository:
             update: Update | None = None,
             *,
             session: Session = None,
-            return_type: ReturnType = (
-                    ReturnType.DOCUMENT
-            ),
+            return_type: ReturnType = ReturnType.DOCUMENT,
             **kwargs,
     ) -> UpdateResult:
-        """
-        Update a single document.
-        """
+        """Update a single document."""
         try:
 
-            normalized_update = (
-                cls.normalize_update(
-                    update,
-                    **kwargs,
-                )
-            )
+            normalized_update = cls.normalize_update(update, **kwargs)
 
             result = await (
                 cls.collection().update_one(
@@ -698,16 +456,10 @@ class BaseRepository:
             )
 
             if result.matched_count == 0:
-                raise DocumentNotFoundError(
-                    cls.collection_name,
-                )
+                raise DocumentNotFoundError(cls.collection_name)
 
             document = None
-
-            if (
-                    return_type
-                    == ReturnType.DOCUMENT
-            ):
+            if return_type == ReturnType.DOCUMENT:
                 document = await (
                     cls.collection().find_one(
                         document_filter,
@@ -721,9 +473,7 @@ class BaseRepository:
                 modified_count=result.modified_count,
                 document=document,
                 upserted_id=(
-                    str(result.upserted_id)
-                    if result.upserted_id
-                    else None
+                    str(result.upserted_id) if result.upserted_id else None
                 ),
             )
 
@@ -731,10 +481,7 @@ class BaseRepository:
             raise
 
         except PyMongoError as exc:
-            raise UpdateError(
-                f"Failed to update "
-                f"document: {exc}"
-            ) from exc
+            raise UpdateError(f"Failed to update document: {exc}") from exc
 
     @classmethod
     async def update_many(
@@ -743,22 +490,12 @@ class BaseRepository:
             update: Update | None = None,
             *,
             session: Session = None,
-            return_type: ReturnType = (
-                    ReturnType.NONE
-            ),
+            return_type: ReturnType = ReturnType.NONE,
             **kwargs,
     ) -> UpdateManyResult:
-        """
-        Update multiple documents.
-        """
+        """Update multiple documents."""
         try:
-
-            normalized_update = (
-                cls.normalize_update(
-                    update,
-                    **kwargs,
-                )
-            )
+            normalized_update = cls.normalize_update(update, **kwargs)
 
             result = await (
                 cls.collection().update_many(
@@ -770,20 +507,13 @@ class BaseRepository:
 
             documents = []
 
-            if (
-                    return_type
-                    == ReturnType.DOCUMENT
-            ):
+            if return_type == ReturnType.DOCUMENT:
                 cursor = cls.collection().find(
                     document_filter,
-                    session=session,
+                    session=session
                 )
 
-                documents = await (
-                    cursor.to_list(
-                        length=None,
-                    )
-                )
+                documents = await cursor.to_list(length=None)
 
             return UpdateManyResult(
                 acknowledged=result.acknowledged,
@@ -793,34 +523,22 @@ class BaseRepository:
             )
 
         except PyMongoError as exc:
-            raise UpdateError(
-                f"Failed to update "
-                f"documents: {exc}"
-            ) from exc
+            raise UpdateError(f"Failed to update documents: {exc}") from exc
 
-    # ==========================================================
+    # -------------------------------------------------------------------------
     # DELETE
-    # ==========================================================
-
+    # -------------------------------------------------------------------------
     @classmethod
     async def delete_by_id(
             cls,
             id_: str,
             *,
             session: Session = None,
-            return_type: ReturnType = (
-                    ReturnType.NONE
-            ),
+            return_type: ReturnType = ReturnType.NONE,
     ) -> DeleteResult:
-        """
-        Delete document by id.
-        """
+        """Delete document by id."""
         return await cls.delete_one(
-            {
-                "_id": cls.object_id(
-                    id_,
-                )
-            },
+            {"_id": cls.object_id(id_)},
             session=session,
             return_type=return_type,
         )
@@ -831,24 +549,14 @@ class BaseRepository:
             document_filter: Filter,
             *,
             session: Session = None,
-            return_type: ReturnType = (
-                    ReturnType.NONE
-            ),
+            return_type: ReturnType = ReturnType.NONE,
     ) -> DeleteResult:
-        """
-        Delete a single document.
-        """
+        """Delete a single document."""
         try:
-
             document = None
 
-            #
             # Fetch document only when requested
-            #
-            if (
-                    return_type
-                    == ReturnType.DOCUMENT
-            ):
+            if return_type == ReturnType.DOCUMENT:
                 document = await (
                     cls.collection().find_one(
                         document_filter,
@@ -878,10 +586,7 @@ class BaseRepository:
             raise
 
         except PyMongoError as exc:
-            raise DeleteError(
-                f"Failed to delete "
-                f"document: {exc}"
-            ) from exc
+            raise DeleteError(f"Failed to delete document: {exc}") from exc
 
     @classmethod
     async def delete_many(
@@ -889,34 +594,20 @@ class BaseRepository:
             document_filter: Filter,
             *,
             session: Session = None,
-            return_type: ReturnType = (
-                    ReturnType.NONE
-            ),
+            return_type: ReturnType = ReturnType.NONE,
     ) -> DeleteManyResult:
-        """
-        Delete multiple documents.
-        """
+        """Delete multiple documents."""
         try:
-
             documents = []
 
-            #
             # Fetch documents only when requested
-            #
-            if (
-                    return_type
-                    == ReturnType.DOCUMENT
-            ):
+            if return_type == ReturnType.DOCUMENT:
                 cursor = cls.collection().find(
                     document_filter,
                     session=session,
                 )
 
-                documents = await (
-                    cursor.to_list(
-                        length=None,
-                    )
-                )
+                documents = await cursor.to_list(length=None)
 
             result = await (
                 cls.collection().delete_many(
@@ -932,15 +623,11 @@ class BaseRepository:
             )
 
         except PyMongoError as exc:
-            raise DeleteError(
-                f"Failed to delete "
-                f"documents: {exc}"
-            ) from exc
+            raise DeleteError(f"Failed to delete documents: {exc}") from exc
 
-    # ==========================================================
+    # -------------------------------------------------------------------------
     # UPSERT
-    # ==========================================================
-
+    # -------------------------------------------------------------------------
     @classmethod
     async def upsert(
             cls,
@@ -948,22 +635,12 @@ class BaseRepository:
             update: Update | None = None,
             *,
             session: Session = None,
-            return_type: ReturnType = (
-                    ReturnType.NONE
-            ),
+            return_type: ReturnType = ReturnType.NONE,
             **kwargs,
     ) -> UpdateResult:
-        """
-        Update existing document or insert a new one.
-        """
+        """Update existing document or insert a new one."""
         try:
-
-            normalized_update = (
-                cls.normalize_update(
-                    update,
-                    **kwargs,
-                )
-            )
+            normalized_update = cls.normalize_update(update, **kwargs)
 
             result = await (
                 cls.collection().update_one(
@@ -975,11 +652,7 @@ class BaseRepository:
             )
 
             document = None
-
-            if (
-                    return_type
-                    == ReturnType.DOCUMENT
-            ):
+            if return_type == ReturnType.DOCUMENT:
                 document = await (
                     cls.collection().find_one(
                         document_filter,
@@ -993,23 +666,16 @@ class BaseRepository:
                 modified_count=result.modified_count,
                 document=document,
                 upserted_id=(
-                    str(result.upserted_id)
-                    if result.upserted_id
-                    else None
+                    str(result.upserted_id) if result.upserted_id else None
                 ),
             )
 
         except PyMongoError as exc:
+            raise UpdateError(f"Failed to upsert document: {exc}") from exc
 
-            raise UpdateError(
-                f"Failed to upsert "
-                f"document: {exc}"
-            ) from exc
-
-    # ==========================================================
+    # -------------------------------------------------------------------------
     # BULK
-    # ==========================================================
-
+    # -------------------------------------------------------------------------
     @classmethod
     async def bulk_write(
             cls,
@@ -1018,11 +684,8 @@ class BaseRepository:
             session: Session = None,
             ordered: bool = True,
     ) -> BulkResult:
-        """
-        Execute bulk write operations.
-        """
+        """Execute bulk write operations."""
         try:
-
             result = await (
                 cls.collection().bulk_write(
                     operations,
@@ -1037,34 +700,21 @@ class BaseRepository:
                 matched_count=result.matched_count,
                 modified_count=result.modified_count,
                 deleted_count=result.deleted_count,
-                upserted_count=len(
-                    result.upserted_ids,
-                ),
+                upserted_count=len(result.upserted_ids),
                 inserted_ids=[],
-                upserted_ids=[
-                    str(id_)
-                    for id_
-                    in result.upserted_ids.values()
-                ],
+                upserted_ids=[str(id_) for id_ in result.upserted_ids.values()]
             )
 
-        except BulkWriteError as exc:
+        except BulkWriteError as ex:
+            raise BulkOperationError(str(ex.details)) from ex
 
+        except Exception as ex:
             raise BulkOperationError(
-                str(exc.details),
-            ) from exc
+                f"Failed to execute bulk operation: {ex}") from ex
 
-        except Exception as exc:
-
-            raise BulkOperationError(
-                f"Failed to execute "
-                f"bulk operation: {exc}"
-            ) from exc
-
-    # ==========================================================
+    # -------------------------------------------------------------------------
     # AGGREGATION
-    # ==========================================================
-
+    # -------------------------------------------------------------------------
     @classmethod
     async def aggregate(
             cls,
@@ -1072,140 +722,80 @@ class BaseRepository:
             *,
             session: Session = None,
     ) -> Documents:
-        """
-        Execute aggregation pipeline.
-
+        """Execute aggregation pipeline.
         Args:
             pipeline:
                 MongoDB aggregation pipeline.
-
             session:
                 Optional MongoDB session.
-
         Returns:
             List of aggregation documents.
-
         Raises:
             AggregateError
         """
         try:
+            cursor = cls.collection().aggregate(pipeline, session=session)
 
-            cursor = cls.collection().aggregate(
-                pipeline,
-                session=session,
-            )
-
-            return await cursor.to_list(
-                length=None,
-            )
+            return await cursor.to_list(length=None)
 
         except PyMongoError as exc:
-
             raise AggregationError(
-                f"Failed to execute "
-                f"aggregation: {exc}"
-            ) from exc
+                f"Failed to execute aggregation: {exc}") from exc
 
     @classmethod
     def aggregate_cursor(
             cls,
             pipeline: Pipeline,
             *,
-            session: Session = None,
+            session: Session = None
     ):
-        """
-        Return aggregation cursor.
-        """
+        """Return aggregation cursor."""
         return cls.collection().aggregate(
             pipeline,
             session=session,
         )
 
-    # ==========================================================
+    # -------------------------------------------------------------------------
     # INDEXES
-    # ==========================================================
-
+    # -------------------------------------------------------------------------
     @classmethod
-    async def create_indexes(
-            cls,
-    ) -> IndexSyncResult:
-        """
-        Create repository indexes.
-        """
+    async def create_indexes(cls) -> IndexSyncResult:
+        """Create repository indexes."""
         try:
-
             result = IndexSyncResult()
 
             if not cls.indexes:
                 return result
 
             existing_indexes = {
-                index["name"]
-                for index
-                in await cls.list_indexes()
+                index["name"] for index in await cls.list_indexes()
             }
 
             for index in cls.indexes:
+                index_name = index.get_name()
 
-                index_name = (
-                    index.get_name()
-                )
-
-                if (
-                        index_name
-                        in existing_indexes
-                ):
-                    result.skipped.append(
-                        index_name,
-                    )
+                if index_name in existing_indexes:
+                    result.skipped.append(index_name)
                     continue
 
-                await (
-                    cls.collection().create_indexes(
-                        [
-                            index.to_index_model()
-                        ]
-                    )
-                )
+                await cls.collection().create_indexes([index.to_index_model()])
 
-                result.created.append(
-                    index_name,
-                )
+                result.created.append(index_name)
 
             return result
 
         except PyMongoError as exc:
-
-            raise IndexError(
-                f"Failed to create "
-                f"indexes: {exc}"
-            ) from exc
+            raise IndexError(f"Failed to create indexes: {exc}") from exc
 
     @classmethod
-    async def list_indexes(
-            cls,
-    ) -> Documents:
-        """
-        List collection indexes.
-        """
+    async def list_indexes(cls) -> Documents:
+        """List collection indexes."""
         try:
-
-            cursor = (
-                cls.collection().list_indexes()
-            )
-
-            return await (
-                cursor.to_list(
-                    length=None,
-                )
-            )
+            cursor = cls.collection().list_indexes()
+            return await cursor.to_list(length=None)
 
         except PyMongoError as exc:
-
-            raise IndexError(
-                f"Failed to list "
-                f"indexes: {exc}"
-            ) from exc
+            raise IndexError(f"Failed to list indexes: {exc}") from exc
 
     @classmethod
     async def drop_indexes(
@@ -1213,51 +803,27 @@ class BaseRepository:
             *,
             keep_id_index: bool = True,
     ) -> IndexSyncResult:
-        """
-        Drop collection indexes.
-        """
+        """Drop collection indexes."""
         try:
-
             result = IndexSyncResult()
 
-            indexes = await (
-                cls.list_indexes()
-            )
+            indexes = await cls.list_indexes()
 
             for index in indexes:
+                index_name = index["name"]
 
-                index_name = index[
-                    "name"
-                ]
-
-                if (
-                        keep_id_index
-                        and index_name
-                        == "_id_"
-                ):
-                    result.skipped.append(
-                        index_name,
-                    )
+                if keep_id_index and index_name == "_id_":
+                    result.skipped.append(index_name)
                     continue
 
-                await (
-                    cls.collection().drop_index(
-                        index_name,
-                    )
-                )
+                await cls.collection().drop_index(index_name)
 
-                result.dropped.append(
-                    index_name,
-                )
+                result.dropped.append(index_name)
 
             return result
 
         except PyMongoError as exc:
-
-            raise IndexError(
-                f"Failed to drop "
-                f"indexes: {exc}"
-            ) from exc
+            raise IndexError(f"Failed to drop indexes: {exc}") from exc
 
     @classmethod
     async def sync_indexes(
@@ -1265,94 +831,45 @@ class BaseRepository:
             *,
             drop_obsolete: bool = False,
     ) -> IndexSyncResult:
-        """
-        Synchronize repository indexes.
-        """
+        """Synchronize repository indexes."""
         try:
-
             result = IndexSyncResult()
 
             repository_indexes = {
-                index.get_name(): index
-                for index
-                in cls.indexes
+                index.get_name(): index for index in cls.indexes
             }
 
             database_indexes = {
-                index["name"]: index
-                for index
-                in await cls.list_indexes()
+                index["name"]: index for index in await cls.list_indexes()
             }
 
-            #
-            # Create missing
-            #
-            for (
-                    index_name,
-                    index,
-            ) in repository_indexes.items():
-
-                if (
-                        index_name
-                        in database_indexes
-                ):
-                    result.skipped.append(
-                        index_name,
-                    )
+            # Create missing indexes.
+            for index_name, index in repository_indexes.items():
+                if index_name in database_indexes:
+                    result.skipped.append(index_name)
                     continue
 
-                await (
-                    cls.collection().create_indexes(
-                        [
-                            index.to_index_model()
-                        ]
-                    )
-                )
+                await cls.collection().create_indexes([index.to_index_model()])
 
-                result.created.append(
-                    index_name,
-                )
+                result.created.append(index_name)
 
-            #
             # Drop obsolete
-            #
             if drop_obsolete:
-
-                for (
-                        index_name,
-                        _,
-                ) in database_indexes.items():
-
-                    if (
-                            index_name
-                            == "_id_"
-                    ):
+                for index_name, _ in database_indexes.items():
+                    if index_name == "_id_":
                         continue
 
-                    if (
-                            index_name
-                            in repository_indexes
-                    ):
+                    if index_name in repository_indexes:
                         continue
 
-                    await (
-                        cls.collection().drop_index(
-                            index_name,
-                        )
-                    )
+                    await cls.collection().drop_index(index_name)
 
-                    result.dropped.append(
-                        index_name,
-                    )
+                    result.dropped.append(index_name)
 
             return result
 
         except PyMongoError as exc:
-
-            raise IndexError(
-                f"Failed to synchronize "
-                f"indexes: {exc}"
-            ) from exc
+            raise IndexError(f"Failed to synchronize indexes: {exc}") from exc
 
 
 if __name__ == '__main__':
