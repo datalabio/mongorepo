@@ -772,7 +772,7 @@ class BaseRepository:
             }
 
             for index in cls.indexes:
-                index_name = index.get_name()
+                index_name = str(index.name)
 
                 if index_name in existing_indexes:
                     result.skipped.append(index_name)
@@ -791,7 +791,7 @@ class BaseRepository:
     async def list_indexes(cls) -> Documents:
         """List collection indexes."""
         try:
-            cursor = cls.collection().list_indexes()
+            cursor = await cls.collection().list_indexes()
             return await cursor.to_list(length=None)
 
         except PyMongoError as exc:
@@ -836,7 +836,7 @@ class BaseRepository:
             result = IndexSyncResult()
 
             repository_indexes = {
-                index.get_name(): index for index in cls.indexes
+                index.name: index for index in cls.indexes
             }
 
             database_indexes = {
@@ -845,13 +845,14 @@ class BaseRepository:
 
             # Create missing indexes.
             for index_name, index in repository_indexes.items():
-                if index_name in database_indexes:
-                    result.skipped.append(index_name)
+                _index_name = str(index_name)
+                if _index_name in database_indexes:
+                    result.skipped.append(_index_name)
                     continue
 
                 await cls.collection().create_indexes([index.to_index_model()])
 
-                result.created.append(index_name)
+                result.created.append(_index_name)
 
             # Drop obsolete
             if drop_obsolete:

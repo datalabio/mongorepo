@@ -15,8 +15,9 @@ from typing import Any
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
-
 # All Custom Imports Here.
+from pymongo import IndexModel
+
 
 # All Native Imports Here.
 
@@ -63,11 +64,10 @@ class BaseIndex(ABC):
 
         return options
 
-    def to_pymongo(self) -> tuple[list[tuple[str, Any]], dict[str, Any]]:
-        """Convert to PyMongo create_index arguments."""
-        return (
+    def to_index_model(self) -> IndexModel:
+        return IndexModel(
             self.keys(),
-            self.options(),
+            **self.options(),
         )
 
     def __repr__(self) -> str:
