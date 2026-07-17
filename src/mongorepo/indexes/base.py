@@ -64,6 +64,18 @@ class BaseIndex(ABC):
 
         return options
 
+    def get_index_name(self) -> str:
+        """Return explicit name or generate one from keys."""
+        if self.name:
+            return self.name
+
+        parts: list[str] = []
+
+        for field, value in self.keys():
+            parts.append(f"{field}_{value}")
+
+        return "_".join(parts)
+
     def to_index_model(self) -> IndexModel:
         return IndexModel(
             self.keys(),

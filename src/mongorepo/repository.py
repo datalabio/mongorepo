@@ -13,6 +13,7 @@ Description:
 from __future__ import annotations
 from typing import ClassVar
 
+from _testcapi import awaitType
 # All Custom Imports Here.
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -772,7 +773,7 @@ class BaseRepository:
             }
 
             for index in cls.indexes:
-                index_name = str(index.name)
+                index_name = str(index.get_index_name())
 
                 if index_name in existing_indexes:
                     result.skipped.append(index_name)
@@ -835,9 +836,7 @@ class BaseRepository:
         try:
             result = IndexSyncResult()
 
-            repository_indexes = {
-                index.name: index for index in cls.indexes
-            }
+            repository_indexes = {index.get_index_name(): index for index in cls.indexes}
 
             database_indexes = {
                 index["name"]: index for index in await cls.list_indexes()
@@ -845,14 +844,13 @@ class BaseRepository:
 
             # Create missing indexes.
             for index_name, index in repository_indexes.items():
-                _index_name = str(index_name)
-                if _index_name in database_indexes:
-                    result.skipped.append(_index_name)
+                if index_name in database_indexes:
+                    result.skipped.append(index_name)
                     continue
 
                 await cls.collection().create_indexes([index.to_index_model()])
 
-                result.created.append(_index_name)
+                result.created.append(index_name)
 
             # Drop obsolete
             if drop_obsolete:
