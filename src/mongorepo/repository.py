@@ -13,7 +13,6 @@ Description:
 from __future__ import annotations
 from typing import ClassVar
 
-from _testcapi import awaitType
 # All Custom Imports Here.
 from bson import ObjectId
 from bson.errors import InvalidId
