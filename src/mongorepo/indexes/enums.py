@@ -11,7 +11,7 @@ Description:
 
 # All Python Built-in Imports Here.
 from __future__ import annotations
-from enum import IntEnum, StrEnum
+from enum import Enum
 
 
 # All Custom Imports Here.
@@ -21,7 +21,7 @@ from enum import IntEnum, StrEnum
 # All Attributes or Constants Here.
 
 
-class SortOrder(IntEnum):
+class SortOrder(int, Enum):
     """MongoDB index sort order.
     Example:
         SortOrder.ASC
@@ -32,25 +32,25 @@ class SortOrder(IntEnum):
     DESC = -1
 
 
-class TextOrder(StrEnum):
+class TextOrder(str, Enum):
     """MongoDB text index type."""
 
     TEXT = "text"
 
 
-class HashedOrder(StrEnum):
+class HashedOrder(str, Enum):
     """MongoDB hashed index type."""
 
     HASHED = "hashed"
 
 
-class Geo2DOrder(StrEnum):
+class Geo2DOrder(str, Enum):
     """MongoDB geo2d index type."""
 
     GEO2D = "2d"
 
 
-class GeoSphereOrder(StrEnum):
+class GeoSphereOrder(str, Enum):
     """MongoDB geosphere index type."""
 
     GEOSPHERE = "2dsphere"

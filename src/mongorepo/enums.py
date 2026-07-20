@@ -11,7 +11,7 @@ Description:
 
 # All Python Built-in Imports Here.
 from __future__ import annotations
-from enum import StrEnum
+from enum import Enum
 
 
 # All Custom Imports Here.
@@ -21,7 +21,7 @@ from enum import StrEnum
 # All Attributes or Constants Here.
 
 
-class ReturnType(StrEnum):
+class ReturnType(str, Enum):
     """Repository return strategy.
     DOCUMENT:
         Return DOCUMENT.
